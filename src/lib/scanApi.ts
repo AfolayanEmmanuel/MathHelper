@@ -28,9 +28,10 @@ export async function scanHomework(request: ScanRequest, signal?: AbortSignal): 
     });
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') throw e;
-    throw new Error('Could not reach the Math Helper server. Make sure the dev server is running.');
+    throw new Error('Could not reach the Math Helper server. Check your internet connection and try again.');
   }
 
+  if (res.status === 413) throw new Error('This photo is too large to upload. Try cropping it closer to the question.');
   const isJson = res.headers.get('content-type')?.includes('application/json');
   const data = isJson ? await res.json().catch(() => null) : null;
   if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`);

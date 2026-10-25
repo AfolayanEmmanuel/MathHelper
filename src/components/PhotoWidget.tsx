@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -13,12 +14,13 @@ import { Button, Card, SectionTitle, styles as ui } from './ui';
 const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ['images'],
   allowsEditing: true,
-  quality: 0.7, // re-encodes to a smaller JPEG on device, keeping uploads fast
-  base64: true,
+  quality: 0.8,
   preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
 };
 
-const SUPPORTED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+// Photos are downscaled before upload: keeps requests under hosting body limits (e.g. Vercel ~4.5 MB)
+// and makes scans faster. 1600px on the long side is plenty for reading homework.
+const MAX_DIMENSION = 1600;
 
 type ScanState =
   | { status: 'idle' }
@@ -31,17 +33,18 @@ function notify(title: string, message: string) {
   else Alert.alert(title, message);
 }
 
-/** Pull base64 + mime type from a picked asset (web may only give a data: URI). */
-function toPayload(asset: ImagePicker.ImagePickerAsset) {
-  let base64 = asset.base64 ?? null;
-  let mimeType = asset.mimeType ?? 'image/jpeg';
-  const dataUri = /^data:([^;]+);base64,(.*)$/.exec(asset.uri);
-  if (dataUri) {
-    mimeType = dataUri[1];
-    base64 ??= dataUri[2];
+/** Resize (if needed) and re-encode as JPEG, returning base64 for the scan API. */
+async function toPayload(asset: ImagePicker.ImagePickerAsset) {
+  const context = ImageManipulator.manipulate(asset.uri);
+  const { width = 0, height = 0 } = asset;
+  if (Math.max(width, height) > MAX_DIMENSION) {
+    context.resize(width >= height ? { width: MAX_DIMENSION } : { height: MAX_DIMENSION });
   }
+  const image = await context.renderAsync();
+  const result = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.7, base64: true });
+  const base64 = result.base64 ?? /^data:[^;]+;base64,(.*)$/.exec(result.uri)?.[1];
   if (!base64) throw new Error('Could not read the image. Please try another photo.');
-  return { imageBase64: base64, mimeType: SUPPORTED_MIME.has(mimeType) ? mimeType : 'image/jpeg' };
+  return { imageBase64: base64, mimeType: 'image/jpeg' };
 }
 
 export function PhotoWidget() {
@@ -80,7 +83,7 @@ export function PhotoWidget() {
     abortRef.current = controller;
     setScan({ status: 'scanning' });
     try {
-      const result = await scanHomework(toPayload(photo), controller.signal);
+      const result = await scanHomework(await toPayload(photo), controller.signal);
       setScan({ status: 'done', result });
     } catch (e) {
       if (controller.signal.aborted) return;
