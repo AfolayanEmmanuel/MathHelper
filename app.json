@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Math Helper",
+    "slug": "MathHelper",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "server"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Math Helper to access your photos so you can upload homework problems.",
+          "cameraPermission": "Allow Math Helper to use your camera so you can snap homework problems."
+        }
+      ]
+    ],
+    "scheme": "mathhelper",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
