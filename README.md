@@ -2,7 +2,7 @@
 
 **Snap a photo of your math homework and get every answer with a clear, step-by-step explanation — then keep learning with lessons and quizzes.**
 
-**Live demo:** https://mathelper-theta.vercel.app *(password protected — ask me for access)*
+**Live demo:** https://mathelper-theta.vercel.app
 
 Built with **React Native + Expo SDK 54** and **Expo Router**, running on iOS, Android and the web from one codebase.
 
